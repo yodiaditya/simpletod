@@ -17,6 +17,7 @@ CUDA_VISIBLE_DEVICES=$1 python main.py \
     --do_train \
     --train_data_file=$TRAIN_FILE \
     --do_eval \
+    --eval_all_checkpoints \
     --eval_data_file=$TEST_FILE \
     --evaluate_during_training \
     --save_steps 10000 \

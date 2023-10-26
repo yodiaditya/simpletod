@@ -62,7 +62,7 @@ def get_response(sent, tokenizer):
     tokens = tokenizer.encode(tmp)
     new_tokens = []
     for tok in tokens:
-        if tok in tokenizer.encode(tokenizer._eos_token):
+        if tok in tokenizer.encode(tokenizer.eos_token):
             continue
         new_tokens.append(tok)
     response = tokenizer.decode(new_tokens).strip(' ,.')
@@ -80,7 +80,7 @@ def get_response_openaigpt(sent, tokenizer):
     tokens = tokenizer.encode(tmp)
     new_tokens = []
     for tok in tokens:
-        if tok in tokenizer.encode(tokenizer._eos_token):
+        if tok in tokenizer.encode(tokenizer.eos_token):
             continue
         new_tokens.append(tok)
     response = tokenizer.decode(new_tokens).strip(' ,.')

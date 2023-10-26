@@ -332,7 +332,7 @@ def get_response_new(sent):
     new_tokens = []
     for tok in tokens:
         # if tok in break_tokens:
-        if tok in tokenizer.encode(tokenizer._eos_token):
+        if tok in tokenizer.encode(tokenizer.eos_token):
             continue
         new_tokens.append(tok)
     # ipdb.set_trace()
@@ -617,8 +617,8 @@ if __name__ == '__main__':
     model.eval()
     model.to('cuda')
 
-    break_tokens = tokenizer.encode(tokenizer._eos_token) + tokenizer.encode('?') + tokenizer.encode('!')
-    # break_tokens = tokenizer.encode(tokenizer._eos_token)
+    break_tokens = tokenizer.encode(tokenizer.eos_token) + tokenizer.encode('?') + tokenizer.encode('!')
+    # break_tokens = tokenizer.encode(tokenizer.eos_token)
     MAX_LEN = model.config.n_ctx
 
     if 'openai-gpt' in model_checkpoint:

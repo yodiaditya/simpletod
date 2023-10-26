@@ -1,6 +1,3 @@
-
-
-
 # SimpleTOD: A Simple Language Model for Task-Oriented Dialogue
 Authors: [Ehsan Hosseini-Asl](https://scholar.google.com/citations?user=I9w3ON4AAAAJ&hl=en), [Bryan McCann](https://bmccann.github.io/), [Chien-Sheng Wu](https://jasonwu0731.github.io/), [Semih Yavuz](https://scholar.google.co.uk/citations?user=krh3p8AAAAAJ&hl=en), and [Richard Socher](https://www.socher.org/)
 
@@ -43,7 +40,7 @@ Blog link: https://blog.einstein.ai/simpletod
 - [License](#license)
  
 
-## Installation
+## Installation (Modified)
 
 The package general requirements are
 
@@ -54,6 +51,10 @@ The package general requirements are
 1- The package can be installed by running the following command.  
 
 ```pip install -r requirements.txt```
+
+And install required Spacy `en_core_web_sm`
+
+```python -m spacy download en_core_web_sm```
 
 2- Running inside docker container
 ```

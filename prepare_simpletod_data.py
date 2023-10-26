@@ -153,12 +153,12 @@ for split in ['train', 'val', 'test']:
     with open('{}/{}.history_belief'.format(save_dir, split),
               'wt') as f:
         for l in tmp:
-            f.write('{} {} {}\n'.format(gpt2_tokenizer._bos_token, l.lower(), gpt2_tokenizer._eos_token))
+            f.write('{} {} {}\n'.format(gpt2_tokenizer._bos_token, l.lower(), gpt2_tokenizer.eos_token))
 
     tmp = []
     for hist, bs, act, trg in zip(history_raw_new, belief_raw_new, action_raw_new, output_raw_delex_new):
         tmp.append(' '.join([hist.lower(), bs.lower(), act, trg]))
     with open('{}/{}.history_belief_action_sys_delex'.format(save_dir, split), 'wt') as f:
         for l in tmp:
-            f.write('{} {} {}\n'.format(gpt2_tokenizer._bos_token, l.lower(), gpt2_tokenizer._eos_token))
+            f.write('{} {} {}\n'.format(gpt2_tokenizer._bos_token, l.lower(), gpt2_tokenizer.eos_token))
 

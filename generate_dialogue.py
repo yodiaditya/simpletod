@@ -79,7 +79,7 @@ else:
 model.eval()
 model.to('cuda')
 
-break_tokens = tokenizer.encode(tokenizer._eos_token)
+break_tokens = tokenizer.encode(tokenizer.eos_token)
 MAX_LEN = model.config.n_ctx
 
 
