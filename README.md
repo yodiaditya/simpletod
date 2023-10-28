@@ -67,7 +67,7 @@ This section explains steps to preprocess MultiWOZ dataset and training the mode
 ### Preprocessing: 
 It includes downloading MultiWOZ dataset, performing delexicaliztion, and creating dataset for language model
 ```
-create_dataset.sh
+bash create_dataset.sh
 ```
 Each dialogue turn will be represented as a sequence, which contains previous user/system turns, belief, action, and delexicalized response
 
@@ -78,7 +78,6 @@ Each dialogue turn will be represented as a sequence, which contains previous us
 <|response|> sure , the post code to [attraction_name] is [attraction_postcode] , the entrance fee is free , and phone number [attraction_phone] <|endofresponse|> <|endoftext|>
 ```
 
-
 ### DST training: 
 training the model for predicting belief states.   
  
@@ -86,13 +85,26 @@ training the model for predicting belief states.
 train_dst.sh $GPU gpt2 $GPT2_TYPE $BATCH
 ```
 
+If you want to enable FP16 Training, please install NVIDIA apex
+
+```
+git clone https://github.com/NVIDIA/apex
+cd apex
+pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" --global-option="--fast_multihead_attn" --no-build-isolation .
+```
+
+
+In my case, I would like to leverage RTX 4090, so my training will be
+For instance
+```
+train_dst.sh 0 gpt2 gpt2 6
+```
 For this task, we include ```none``` slot values in the sequence. 
 We observed that this will improve SimpleTOD performance on DST by reducing false positive rates. 
 ```
 <|endoftext|> <|context|> <|user|> am looking for a place to to stay that has cheap price range it should be in a type of hotel <|endofcontext|> 
 <|belief|> hotel name not mentioned , hotel area not mentioned , hotel parking not mentioned , hotel pricerange cheap , hotel stars not mentioned , hotel internet not mentioned , hotel type hotel <|endofbelief|> <|endoftext|>
 ```
-
 
 ### End-to-End training:
 In this step, we train SimpleTOD on the sequence of context+belief+action+delex response. 
@@ -101,6 +113,11 @@ Compared to DST task, we do not include ```none``` slot values, because of the s
 train_end2end.sh $GPU gpt2 $GPT2_TYPE $BATCH
 ```
 
+In my case, I would like to leverage RTX 4090 with FP16, so my training will be
+For instance
+```
+bash train_end2end.sh 1 gpt2 gpt2 6
+```
  
 ### Generation:
 
@@ -110,6 +127,13 @@ Generation is based on each dialogue, where it create context for each turn and 
 ```
 CUDA_VISIBLE_DEVICES=$GPU python generate_dialogue.py $CHECKPOINT $DECODING
 ```
+
+Example
+
+```
+CUDA_VISIBLE_DEVICES=1 python generate_dialogue.py --checkpoint output/gpt2/checkpoint-470000 --decoding greedy
+```
+
 It will save the model output in a json file ```MODEL_OUTPUT``` which contains all dialogues with groundtruth user and system responses as well.
 - In order to use DB search during generation, set ```--use_db_search``` (this will use *oracle* DB search results)
 - In order to use DB search dynamically, set ```--use_db_search``` and ```--use_dynamic_db```
@@ -122,9 +146,11 @@ MultiWOZ evaluation contains two part, Dialogue State Tracking (DST) and End-to-
 
 In order to compute joint accuracy, simply run the following script using the generated
 ```MODEL_OUTPUT``` file. it will use the generated belief states to compute the metric. It will compute joint accuracy without any label cleaning.
+
 ```
 python compute_joint_acc.py $MODEL_OUTPUT 
 ```
+
 There are two types of label cleaning that can be used to compute joint accuracy. 
 - To use default lable cleaning suggested by MultiWOZ author, please set ```--default_cleaning``` (for more details, please refer to [MultiWOZ](https://github.com/budzianowski/multiwoz) FAQ.5)
 - We found other type of noisy annotation. Please refer to the paper for more details different types of noisy annotations. Here, we provide an option to compute joint accuracy by fixing Type 2 noisy annotation (where one or more slots are not labeled in some turns.) by setting ```--type2_cleaning``` 
@@ -142,8 +168,14 @@ python evaluate_multiwoz.py $MODEL_OUTPUT
 
 In order to test the model in real conversation with human, we have provided a simple script where user can input text in a multi turn setting, and see the responses from SimpleTOD. 
 It will generate lexicalized responses and belief states at each turn. For more information, please read the blog.  
+
 ```
 python demo.py $CHECKPOINT $DECODING
+```
+
+eg: 
+```
+python demo.py output/gpt2/checkpoint-470000 nucleus 0.5
 ```
 
 

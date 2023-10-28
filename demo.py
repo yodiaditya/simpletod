@@ -22,9 +22,6 @@ logging.getLogger("transformers.modeling_gpt2").setLevel(logging.ERROR)
 logging.getLogger("transformers.configuration_utils").setLevel(logging.ERROR)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
 
-
-
-
 class MultiWozDB(object):
     # loading databases
 
@@ -659,22 +656,22 @@ if __name__ == '__main__':
         tokens_tensor = tokens_tensor.to('cuda')
         predicted_index = indexed_tokens[-1]
 
-        # if decoding == 'nucleus':
-        #     sample_output = model.generate(
-        #         tokens_tensor,
-        #         do_sample=True,
-        #         max_length=MAX_LEN,
-        #         top_p=TOP_P,
-        #         top_k=0
-        #     )
-        # elif decoding == 'greedy':
-        #     sample_output = model.generate(
-        #         tokens_tensor,
-        #         max_length=MAX_LEN,
-        #         do_sample=False
-        #     )
-        # predicted_text = tokenizer.decode(sample_output[0], skip_special_tokens=True)
-
+        if decoding == 'nucleus':
+            sample_output = model.generate(
+                tokens_tensor,
+                do_sample=True,
+                max_length=MAX_LEN,
+                top_p=TOP_P,
+                top_k=0
+            )
+        elif decoding == 'greedy':
+            sample_output = model.generate(
+                tokens_tensor,
+                max_length=MAX_LEN,
+                do_sample=False
+            )
+        predicted_text = tokenizer.decode(sample_output[0], skip_special_tokens=True)
+        print("Predicted ", predicted_text)
 
         with torch.no_grad():
             while predicted_index not in break_tokens:
@@ -690,19 +687,27 @@ if __name__ == '__main__':
 
         tmp_pred = tokenizer.decode(indexed_tokens)
         belief_text = get_belief_new_dbsearch(tmp_pred)
-        # print(tmp_pred)
-        beliefs = convert_belief(belief_text)
-        # domain = list(beliefs.keys())[0]
-        domain = get_turn_domain(beliefs, domain_queue)
 
-        if 'db' in model_checkpoint:
-            if 'dbnmatch' in model_checkpoint:
-                only_match = True
-                db_text_tmp = get_db_text(beliefs, dom=domain, only_match=only_match)
-            else:
-                db_text_tmp = get_db_text(beliefs, dom=domain)
-            db_text = ' <|dbsearch|> {} <|endofdbsearch|>'.format(' , '.join(db_text_tmp))
-            text = tmp_pred + db_text
+        print("TP PRED", tmp_pred)
+        print("BElief text", belief_text)
+
+        beliefs = convert_belief(belief_text)
+        domain = ""
+
+        if beliefs:
+            # domain = list(beliefs.keys())[0]
+            domain = get_turn_domain(beliefs, domain_queue)
+
+            if 'db' in model_checkpoint:
+                if 'dbnmatch' in model_checkpoint:
+                    only_match = True
+                    db_text_tmp = get_db_text(beliefs, dom=domain, only_match=only_match)
+                else:
+                    db_text_tmp = get_db_text(beliefs, dom=domain)
+                db_text = ' <|dbsearch|> {} <|endofdbsearch|>'.format(' , '.join(db_text_tmp))
+                text = tmp_pred + db_text
+        else:
+            text = tmp_pred
         # print(text)
 
         # continue generation after creating db
@@ -750,32 +755,38 @@ if __name__ == '__main__':
 
         action_text = get_action_new(predicted_text)
         response_text = get_response_new(predicted_text)
-        # print(predicted_text)
+        print("Predicted final ", predicted_text)
 
-        db_results = multiwoz_db.queryResultVenues_new(domain, beliefs[domain], real_belief=True)
+        lex_response = ""
 
-        if domain == 'train':
-            lex_response = lexicalize_train(response_text, db_results, beliefs, turn_domain=domain)
-        elif domain == 'hotel':
-            lex_response = lexicalize_hotel(response_text, db_results, beliefs, turn_domain=domain)
-        else:
-            ipdb.set_trace()
-            raise TypeError('unknown domain')
+        if domain:
+            db_results = multiwoz_db.queryResultVenues_new(domain, beliefs[domain], real_belief=True)
+
+            if domain == 'train':
+                lex_response = lexicalize_train(response_text, db_results, beliefs, turn_domain=domain)
+            elif domain == 'hotel':
+                lex_response = lexicalize_hotel(response_text, db_results, beliefs, turn_domain=domain)
+            else:
+                ipdb.set_trace()
+                raise TypeError('unknown domain')
 
         delex_system = '<|system|> {}'.format(response_text)
-        system = '<|system|> {}'.format(lex_response)
-        context = context + ' ' + system
+        context = context + ' ' + delex_system
 
+        print("Context: ", context)
 
-        print(Fore.CYAN + 'SimpleTOD: ', end="")
-        for a in lex_response.split(' '):
-            print(a + ' ', end="")
-            sys.stdout.flush()
-            time.sleep(delay)
-        print(Style.RESET_ALL)
-        print(Fore.YELLOW + 'belief: {}'.format(beliefs) + Style.RESET_ALL)
+        if lex_response:
+            system = '<|system|> {}'.format(lex_response)
 
-        print(Style.RESET_ALL)
+            print(Fore.CYAN + 'SimpleTOD: ', end="")
+            for a in lex_response.split(' '):
+                print(a + ' ', end="")
+                sys.stdout.flush()
+                time.sleep(delay)
+            print(Style.RESET_ALL)
+            print(Fore.YELLOW + 'belief: {}'.format(beliefs) + Style.RESET_ALL)
+
+            print(Style.RESET_ALL)
 
         turn += 1
         prev_beliefs = beliefs

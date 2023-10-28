@@ -1,8 +1,6 @@
 """
 Fine-tuning pretrained language model (GPT2) on Task-oriented Dialogue
 """
-
-
 import argparse
 import glob
 import logging
@@ -50,12 +48,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 MODEL_CLASSES = {
     "gpt2": (GPT2Config, GPT2LMHeadModel, GPT2Tokenizer),
     "gpt2-small": (GPT2SmallConfig, GPT2LMHeadModel, GPT2Tokenizer),
 }
-
 
 def get_model_tokenizer(args):
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
@@ -128,7 +124,6 @@ def get_training_info(dataloader, args):
     return global_step, epochs_trained, steps_trained_in_current_epoch
 
 
-
 def train_epoch(model, tokenizer, optimizer, scheduler, train_dataloader, tr_loss, logging_loss, global_step, steps_trained_in_current_epoch, tb_writer, args):
     """train one epoch"""
     if args.fp16:
@@ -187,7 +182,7 @@ def train_epoch(model, tokenizer, optimizer, scheduler, train_dataloader, tr_los
             # save checkpoint
             if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
                 if args.evaluate_during_training:
-                    save_checkpoint(model, optimizer, scheduler, tokenizer, args)
+                    save_checkpoint(model, optimizer, scheduler, tokenizer, args, global_step)
 
         if args.max_steps > 0 and global_step > args.max_steps:
             epoch_iterator.close()
