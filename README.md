@@ -61,6 +61,9 @@ And install required Spacy `en_core_web_sm`
 docker build -t <image_name>:<tag> -f Dockerfile
 ```
 
+3- Conda Environment
+The `environment.yml` is available if you are using Anaconda
+
 ## Usage
 This section explains steps to preprocess MultiWOZ dataset and training the model. 
 
